@@ -71,4 +71,6 @@ public class Player : MonoBehaviour
             GameScoreText.text = "Score: " + score.ToString();
         }
     }
+
+
 }
