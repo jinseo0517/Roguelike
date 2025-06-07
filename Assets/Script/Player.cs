@@ -1,76 +1,42 @@
 using System.Collections;
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
-using UnityEngine.SocialPlatforms.Impl;
+using UnityEngine.InputSystem;
 
 public class Player : MonoBehaviour
 {
-    float moveSpeed = 2f;
+    public Vector2 inputVec;
+    public float speed;
 
-    [SerializeField] Sprite spriteUp;
-    [SerializeField] Sprite spriteDown;
-    [SerializeField] Sprite spriteLeft;
-    [SerializeField] Sprite spriteRight;
+    Rigidbody2D rigid;
+    SpriteRenderer spriter;
+    Animator anim;
 
-    Rigidbody2D rb;
-    SpriteRenderer sR;
-
-    Vector2 input;
-    Vector2 velocity;
-
-    public float score;
-
-    public TextMeshProUGUI GameScoreText;
-
-    private void Awake()
+    void Awake()
     {
-        rb = GetComponent<Rigidbody2D>();
-        sR = GetComponent<SpriteRenderer>();
-        rb.bodyType = RigidbodyType2D.Kinematic;
-
-        score = 0f;
+        rigid = GetComponent<Rigidbody2D>();
+        spriter = GetComponent<SpriteRenderer>();
+        anim = GetComponent<Animator>();
     }
 
-    private void Update()
+    void FixedUpdate()
     {
-        input.x = Input.GetAxisRaw("Horizontal");
-        input.y = Input.GetAxisRaw("Vertical");
+        Vector2 nextVec = inputVec * speed * Time.fixedDeltaTime;
+        rigid.MovePosition(rigid.position + nextVec);
+    }
 
-        velocity = input.normalized * moveSpeed;
+    void OnMove(InputValue value)
+    {
+        inputVec = value.Get<Vector2>();
+    }
 
-        if(input.sqrMagnitude > .01f)
+    void LateUpdate()
+    {
+        anim.SetFloat("Speed", inputVec.magnitude);
+
+        if (inputVec.x != 0)
         {
-            if(Mathf.Abs(input.x) > Mathf.Abs(input.y))
-            {
-                if (input.x > 0)
-                    sR.sprite = spriteRight;
-                else if (input.x < 0)
-                    sR.sprite = spriteLeft;
-            }
-            else
-            {
-                if (input.y > 0)
-                    sR.sprite = spriteUp;
-                else
-                    sR.sprite = spriteDown;
-            }
+            spriter.flipX = inputVec.x < 0;
         }
     }
-    private void FixedUpdate()
-    {
-        rb.MovePosition(rb.position + velocity * Time.fixedDeltaTime);
-    }
-
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        if (collision.CompareTag("Item"))
-        {
-            score += collision.GetComponent<ItemObject>().GetPoint();
-            Destroy(collision.gameObject);
-            GameScoreText.text = "Score: " + score.ToString();
-        }
-    }
-
-
 }
