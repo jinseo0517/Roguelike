@@ -88,18 +88,17 @@ public class Enemy : MonoBehaviour
             GameManager.instance.kill++;
             GameManager.instance.GetExp();
         }
+    }
+    IEnumerator KnockBack()     //코루틴
+    {
+        yield return wait;      //다음 하나의 물리 프레임 딜레이
+        Vector3 playerPos = GameManager.instance.player.transform.position;
+        Vector3 dirVec = transform.position - playerPos;
+        rigid.AddForce(dirVec.normalized * 2, ForceMode2D.Impulse);
+    }
 
-        IEnumerator KnockBack()     //코루틴
-        {
-            yield return wait;      //다음 하나의 물리 프레임 딜레이
-            Vector3 playerPos = GameManager.instance.player.transform.position;
-            Vector3 dirVec = transform.position - playerPos;
-            rigid.AddForce(dirVec.normalized * 2, ForceMode2D.Impulse);
-        }
-
-        void Dead()
-        {
-            gameObject.SetActive(false);
-        }
+    void Dead()
+    {
+        gameObject.SetActive(false);
     }
 }
