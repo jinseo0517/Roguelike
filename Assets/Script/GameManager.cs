@@ -27,12 +27,11 @@ public class GameManager : MonoBehaviour
         instance = this;
     }
 
-    void Start()
+    public void GameStart()
     {
         health = maxHealth;
-
-        //임시 스크립트 (첫번째 캐릭터 선택)
-        uiLevelUp.Select(0);
+        uiLevelUp.Select(0); // 임시 스크립트 (첫번째 캐릭터 선택)
+        isLive = true;
     }
     void Update()
     {
