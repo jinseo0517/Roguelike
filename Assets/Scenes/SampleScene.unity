@@ -17034,6 +17034,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17382bba4cec84547a7ec9b884832e9e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isLive: 1
   gameTime: 0
   maxGameTime: 20
   health: 0
@@ -17041,7 +17042,7 @@ MonoBehaviour:
   level: 0
   kill: 0
   exp: 0
-  nextExp: 03000000050000000a0000001e0000003c0000006400000096000000d20000001801000068010000
+  nextExp: 0100000002000000030000000400000005000000060000000700000008000000090000000a000000
   pool: {fileID: 1689607181}
   player: {fileID: 488642532}
   uiLevelUp: {fileID: 1512077255}
