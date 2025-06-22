@@ -39,6 +39,9 @@ public class GameManager : MonoBehaviour
         player.gameObject.SetActive(true);
         uiLevelUp.Select(playerId % 2); //캐릭터선택
         Resume();
+
+        AudioManager.instance.PlayBgm(true);
+        AudioManager.instance.PlaySfx(AudioManager.Sfx.Select); //선택 효과음
     }
 
     public void GameOver()
@@ -55,6 +58,9 @@ public class GameManager : MonoBehaviour
         uiResult.gameObject.SetActive(true);
         uiResult.Lose();
         Stop();
+
+        AudioManager.instance.PlayBgm(false);
+        AudioManager.instance.PlaySfx(AudioManager.Sfx.Lose);   //게임오버 효과음
     }
 
     public void GameVictory()
@@ -72,6 +78,9 @@ public class GameManager : MonoBehaviour
         uiResult.gameObject.SetActive(true);
         uiResult.Win();
         Stop();
+
+        AudioManager.instance.PlayBgm(false);
+        AudioManager.instance.PlaySfx(AudioManager.Sfx.Win);    //이긴 효과음
     }
 
     public void GameRetry()
