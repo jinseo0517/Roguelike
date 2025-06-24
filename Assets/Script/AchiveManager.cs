@@ -1,99 +1,111 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 using System;
-using System.Collections;                          // Unity 기본 컬렉션 기능
-using System.Collections.Generic;                  // List, Dictionary 같은 제네릭 컬렉션 기능
-using UnityEngine;                                 // Unity 엔진 기능 사용
 
-public class AchiveManager : MonoBehaviour         // 업적 시스템을 관리하는 클래스
+// 업적 해금 및 알림 처리를 담당하는 매니저 클래스
+public class AchiveManager : MonoBehaviour
 {
-    public GameObject[] lockChracter;              // 잠긴 캐릭터 UI 오브젝트들
-    public GameObject[] unlockChracter;            // 해금된 캐릭터 UI 오브젝트들
-    public GameObject uiNotice;                    // 업적 달성 시 표시할 알림 UI
+    public GameObject[] lockChracter;   // 잠긴 상태일 때 표시되는 캐릭터 UI 오브젝트
+    public GameObject[] unlockChracter; // 해금 상태일 때 표시되는 캐릭터 UI 오브젝트
+    public GameObject uiNotice;         // 캐릭터 해금 시 출력되는 알림 UI
 
-    enum Achive { UnlockJaeyong, UnlockSeongeun }  // 업적 이름 정의
-    Achive[] achives;                              // 업적들을 배열로 저장 (전체 반복용)
-    WaitForSecondsRealtime wait;                   // 코루틴에서 사용할 대기 시간 (5초)
+    enum Achive { UnlockJaeyong, UnlockSeongeun } // 캐릭터별 업적 항목 열거형
+    Achive[] achives;                             // enum 배열로 변환해 내부 사용
+    WaitForSecondsRealtime wait;                  // 알림을 몇 초간 표시할지 저장
 
     void Awake()
     {
-        achives = (Achive[])Enum.GetValues(typeof(Achive)); // 열거형 전체 값을 배열로 변환
-        wait = new WaitForSecondsRealtime(5);               // 5초 대기 객체 생성
-
-        if (!PlayerPrefs.HasKey("MyData"))                  // 처음 실행하는 경우
-        {
-            Init();                                         // 업적 데이터 초기화
-        }
-    }
-
-    void Init()                                             // 업적 저장 초기화 함수
-    {
-        PlayerPrefs.SetInt("MyData", 1);                    // 업적 저장이 있음을 표시
-
-        foreach (Achive achive in achives)
-        {
-            PlayerPrefs.SetInt(achive.ToString(), 0);       // 모든 업적을 잠긴 상태(0)로 설정
-        }
+        achives = (Achive[])Enum.GetValues(typeof(Achive)); // enum의 모든 항목을 배열로 추출
+        wait = new WaitForSecondsRealtime(5f);              // 알림 대기 시간 설정 (5초)
     }
 
     void Start()
     {
-        UnlockCharacter();                                  // 시작 시 업적 달성 여부 반영하여 캐릭터 잠금 해제 상태 설정
+        UnlockCharacter(); // 저장된 해금 정보를 바탕으로 UI 상태 반영
     }
 
+    // JSON에 저장된 해금 정보를 기반으로 UI 캐릭터 상태 업데이트
     void UnlockCharacter()
     {
-        for (int index = 0; index < lockChracter.Length; index++)
-        {
-            string achiveName = achives[index].ToString();                  // 업적 이름 가져오기 (문자열)
-            bool isUnlock = PlayerPrefs.GetInt(achiveName) == 1;           // 해금 여부 확인
+        GameSaveData data = SaveSystem.Load(); // 저장된 게임 데이터 로드
 
-            lockChracter[index].SetActive(!isUnlock);                      // 잠금 상태 캐릭터는 업적 미완료 시만 활성화
-            unlockChracter[index].SetActive(isUnlock);                     // 해금 캐릭터는 업적 완료 시만 활성화
+        for (int i = 0; i < lockChracter.Length; i++)
+        {
+            string key = achives[i].ToString(); // 현재 업적 이름 추출
+            bool isUnlock = data.unlockedCharacters.Contains(key); // 해금 여부 확인
+
+            lockChracter[i].SetActive(!isUnlock);   // 잠긴 상태 UI는 해금 안 된 경우만 표시
+            unlockChracter[i].SetActive(isUnlock);  // 해금 상태 UI는 해금된 경우 표시
         }
     }
 
-    void LateUpdate()                                                     // 매 프레임 후반에 실행
+    // 매 프레임마다 특정 업적(제한시간 생존)을 체크
+    void LateUpdate()
     {
-        foreach (Achive achive in achives)                                // 모든 업적에 대해
+        foreach (Achive achive in achives)
         {
-            CheckAchive(achive);                                          // 해당 업적의 조건을 체크
+            if (achive == Achive.UnlockSeongeun)
+                CheckAchive(achive);
         }
     }
 
+    // 업적 조건을 검사하고 조건 달성 시 알림 및 저장 처리
     void CheckAchive(Achive achive)
     {
-        bool isAchive = false;                                            // 업적 조건을 충족했는지 여부
+        bool isAchive = false;
+        GameSaveData data = SaveSystem.Load();      // 저장된 업적 데이터 불러오기
+        string key = achive.ToString();             // 업적 이름 추출
 
-        switch (achive)                                                   // 업적 종류별 조건 정의
+        switch (achive)
         {
             case Achive.UnlockJaeyong:
-                isAchive = GameManager.instance.kill >= 10;               // 적 10마리 이상 처치
+                isAchive = GameManager.instance.kill >= 50;
                 break;
             case Achive.UnlockSeongeun:
-                isAchive = GameManager.instance.gameTime == GameManager.instance.maxGameTime; // 제한시간까지 생존
+                isAchive = GameManager.instance.gameTime >= GameManager.instance.maxGameTime;
                 break;
         }
 
-        if (isAchive && PlayerPrefs.GetInt(achive.ToString()) == 0)       // 처음으로 조건을 충족한 경우
+        if (isAchive && !data.unlockedCharacters.Contains(key))
         {
-            PlayerPrefs.SetInt(achive.ToString(), 1);                     // 업적 해금 상태 저장
+            data.unlockedCharacters.Add(key);       // 해금 처리
+            SaveSystem.Save(data);                  // 저장
 
-            for (int index = 0; index < uiNotice.transform.childCount; index++)
-            {
-                bool isActive = index == (int)achive;                     // 해당 업적에 해당하는 알림 UI만 켜기
-                uiNotice.transform.GetChild(index).gameObject.SetActive(isActive);
-            }
+            // 알림 UI 중 해당 캐릭터에 맞는 오브젝트만 표시
+            for (int i = 0; i < uiNotice.transform.childCount; i++)
+                uiNotice.transform.GetChild(i).gameObject.SetActive(i == (int)achive);
 
-            StartCoroutine(NoticeRoutine());                              // 알림 UI 보여주는 코루틴 실행
+            StartCoroutine(NoticeRoutine());        // 알림 코루틴 실행
         }
     }
 
+    // 적 처치 수 기반 해금 조건을 실시간으로 체크하는 함수
+    public void CheckKillAchiveImmediate(int currentKill)
+    {
+        string key = "UnlockJaeyong"; // 해당 업적 이름
+        GameSaveData data = SaveSystem.Load();
+
+        if (currentKill >= 50 && !data.unlockedCharacters.Contains(key))
+        {
+            data.unlockedCharacters.Add(key);       // 업적 달성 처리
+            SaveSystem.Save(data);                  // JSON 저장
+
+            // Jaeyong은 enum의 0번째 항목이므로 인덱스 0 표시
+            for (int i = 0; i < uiNotice.transform.childCount; i++)
+                uiNotice.transform.GetChild(i).gameObject.SetActive(i == 0);
+
+            uiNotice.SetActive(true);               // 알림 UI 켜기
+            AudioManager.instance.PlaySfx(AudioManager.Sfx.Levelup); // 효과음 재생
+            StartCoroutine(NoticeRoutine());        // 알림 종료 코루틴 실행
+        }
+    }
+
+    // 일정 시간동안 알림을 표시하고 종료하는 코루틴
     IEnumerator NoticeRoutine()
     {
-        uiNotice.SetActive(true);                                         // 알림 UI 보이기
-        AudioManager.instance.PlaySfx(AudioManager.Sfx.Levelup);          // 업적 달성 효과음 재생
-
-        yield return wait;                                                // 5초 대기
-
-        uiNotice.SetActive(false);                                        // 알림 UI 숨기기
+        uiNotice.SetActive(true);     // 알림 UI 켜기
+        yield return wait;           // 대기 (5초)
+        uiNotice.SetActive(false);   // 알림 UI 끄기
     }
 }

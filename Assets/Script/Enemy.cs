@@ -88,7 +88,7 @@ public class Enemy : MonoBehaviour                 // 적의 움직임, 체력, 사망 처
             rigid.simulated = false;                       // 물리 연산 정지
             spriter.sortingOrder = 1;                      // 스프라이트 우선순위 낮춤
             anim.SetBool("Dead", true);                    // 죽음 애니메이션 실행
-            GameManager.instance.kill++;                   // 게임매니저에 처치 수 증가
+            GameManager.instance.AddKill();                   // 게임매니저에 처치 수 증가
             GameManager.instance.GetExp();                 // 경험치 획득
 
             if (GameManager.instance.isLive)
