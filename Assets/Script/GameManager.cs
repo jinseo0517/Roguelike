@@ -37,6 +37,8 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         Debug.Log("Save Path: " + Application.persistentDataPath); // 저장 경로 출력
+
+        
     }
 
     public void GameStart(int id)
